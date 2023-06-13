@@ -1,9 +1,5 @@
-package bet
+package wbcatalog
 
-type BetInfo struct {
-	AdvertID uint64 `json:"advertId"`
-	Bet uint32 `json:"bet"`
-}
 
 type CatalogAdsResponse struct {
 	Pages []struct {
@@ -17,7 +13,13 @@ type CatalogAdsResponse struct {
 		AdvertId uint64 `json:"advertId"`
 		Id uint64 `json:"id"`
 		Cpm uint64 `json:"cpm"`
-		Subject int `json:"subject"`
+		Subject uint64 `json:"subject"`
 	}
 	MinCpm uint64 `json:"minCpm"`
 }
+
+type KeywordCollectedData struct {
+	Keyword string
+	CatalogAds CatalogAdsResponse
+}
+

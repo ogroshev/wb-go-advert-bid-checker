@@ -7,6 +7,7 @@ import (
 
 type Config struct {
 	Port int
+	Proxy string
 	LogLevel string
 }
 
@@ -17,6 +18,7 @@ func LoadConfig(path string) (config Config, err error) {
 
     viper.AutomaticEnv()
 	viper.BindEnv("Port", "PORT")
+	viper.BindEnv("Proxy", "PROXY")
 	err = viper.BindEnv("LogLevel", "LOG_LEVEL")
 	if err != nil {
 		log.Warnf("could not bind LogLevel: %s", err)

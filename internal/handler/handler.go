@@ -2,20 +2,38 @@ package handler
 
 import (
 	"encoding/json"
-	"net/http"
 	"io"
+	"net/http"
 
 	log "github.com/sirupsen/logrus"
 
-	"gitlab.com/wb-dynamics/wb-go-advert-bid-checker/internal/bet"
+	"gitlab.com/wb-dynamics/wb-go-advert-bid-checker/internal/wbcatalog"
 )
 
 type FindMaxBetRequest struct {
-	Keywords []string `json:"keywords"`
+	SubjectID uint64   `json:"subject_id"`
+	Keywords  []string `json:"keywords"`
+}
+
+type AdvertWarning struct {
+	Keyword           string `json:"keyword"`
+	PrioritySubjectID uint64 `json:"priority_subject_id"`
+}
+
+type MaxBet struct {
+	Keyword   string `json:"keyword"`
+	SubjectID uint64 `json:"subject_id"`
+	AdvertID  uint64 `json:"advert_id"`
+	Place     uint32 `json:"place"`
+	Bet       uint64 `json:"bet"`
+}
+type FindMaxBetResponse struct {
+	SubjectMaxBet MaxBet          `json:"subject_max_bet"`
+	Warnings      []AdvertWarning `json:"warnings"`
 }
 
 func HandleFindMaxBet(w http.ResponseWriter, r *http.Request) {
-	log.Debugf("request received")
+	log.Infof("request received")
 	defer r.Body.Close()
 	b, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -31,20 +49,17 @@ func HandleFindMaxBet(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	
 
-	maxBet, advertID, err :=  bet.FindMaxBet(req.Keywords)
+	keywordsData, err := wbcatalog.CollectAdvertCompaniesInfo(req.Keywords)
 	if err != nil {
-		log.Errorf("Could not find max bet: %s", err)
+		log.Errorf("Could not collect advert companies info: %s", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	
+	respBody := findMaxBet(keywordsData, req.SubjectID)
 
-	respBody := bet.BetInfo{
-		AdvertID: advertID,
-		Bet: maxBet,
-	}
-	respByte, err := json.Marshal(respBody) 
+	respByte, err := json.Marshal(respBody)
 	if err != nil {
 		log.Errorf("Could not marshal response: %s", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -55,4 +70,33 @@ func HandleFindMaxBet(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write(respByte)
 	log.Debugf("send response: %s", string(respByte))
+}
+
+func findMaxBet(keywordsData []wbcatalog.KeywordCollectedData, subjectID uint64) (resp FindMaxBetResponse) {
+	var maxBet MaxBet
+	for _, kwData := range keywordsData {
+		if subjectID != uint64(kwData.CatalogAds.PrioritySubjects[0]) {
+			resp.Warnings = append(resp.Warnings, AdvertWarning{
+				Keyword:           kwData.Keyword,
+				PrioritySubjectID: uint64(kwData.CatalogAds.PrioritySubjects[0]),
+			})
+		}
+		for idx, advertInfo := range kwData.CatalogAds.Adverts {
+			// в массиве Adverts порядок определяет место. Берем первый элемент, который совпадает с нашим subjectId
+			if advertInfo.Subject == subjectID {
+				if advertInfo.Cpm > maxBet.Bet {
+					maxBet = MaxBet{
+						Keyword:   kwData.Keyword,
+						SubjectID: subjectID,
+						AdvertID:  advertInfo.AdvertId,
+						Place:     uint32(idx + 1),
+						Bet:       advertInfo.Cpm,
+					}
+				}
+				break
+			}
+		}
+	}
+	resp.SubjectMaxBet = maxBet
+	return resp
 }
