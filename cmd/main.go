@@ -13,8 +13,8 @@ import (
 
 func main() {
 	log.Info("starting... ")
-
 	conf, err := config.LoadConfig(".")
+	log.Info("log level: ", conf.LogLevel)
 	if err != nil {
 		log.Fatalf("could not read config: %s", err)
 	}
