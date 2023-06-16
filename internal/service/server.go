@@ -13,7 +13,7 @@ import (
 
 func Serve(ctx context.Context, port int) {
 	router := http.NewServeMux()
-	router.HandleFunc("/find-max-bet", handler.HandleFindMaxBet)
+	router.HandleFunc("/advert-bet-info", handler.HandleAdvertBetInfo)
 
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", port),

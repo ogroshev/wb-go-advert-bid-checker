@@ -61,30 +61,5 @@ loop:
 	log.Infof("%d keywords handled in %s\n", len(keywordsAdvert), time.Since(start))
 
 	return
-
-	// maxBet := max(results)
-	// log.Infof("max bet is: %d", maxBet.Bet)
-	// return maxBet.Bet, maxBet.AdvertID, nil
 }
 
-// func max(bets []BetInfo) BetInfo {
-// 	m := BetInfo{}
-// 	for _, b := range bets {
-// 		if b.Bet > m.Bet {
-// 			m = b
-// 		}
-// 	}
-// 	return m
-// }
-
-// func advertInfoAdapter(catalogAdsResponse CatalogAdsResponse) advert.AdvertInfo {
-// 	for
-// 	return advert.AdvertInfo{
-// 		SubjectMaxBet: {
-// 			SubjectID: catalogAdsResponse.SubjectID,
-// 			AdvertID:  catalogAdsResponse.AdvertID,
-// 			Bet:       catalogAdsResponse.Bet,
-// 		},
-// 		Warnings: catalogAdsResponse.Warnings,
-// 	}
-// }
